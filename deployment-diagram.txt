@@ -1,0 +1,15 @@
+@startuml
+node "Frontend Service" as frontend {
+ component "Ruby on Rails" as ror
+}
+database Index
+node "Indexer Service" as indexer {
+    component Indexer
+}
+node "Spider Service" as spider1 {
+    component Spider
+}
+Index -- frontend
+Index -- indexer
+Index -- spider1
+@enduml
