@@ -17,3 +17,6 @@ and they lived at the bottom of a well.</p>
 def test_parser():
     parsed = parse_page(html_doc) 
     assert parsed["links"] == ["http://example.com/elsie", "http://example.com/lacie", "http://example.com/tillie"]
+    assert parsed["title"] == "The Dormouse's story"
+    # TODO: Better version of the words test, as words should include every individual word in the html document (not tags)
+    assert "Dormouse" in parsed["words"]
