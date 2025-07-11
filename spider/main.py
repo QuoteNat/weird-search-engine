@@ -1,21 +1,9 @@
-from bs4 import BeautifulSoup
-import re
-
-def parse_page(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    parse = {"links": [],
-             "title": "",
-             "words": []}
-    for link in soup.find_all('a'):
-        parse["links"].append(link.get('href'))
-    parse["title"] = soup.title.string
-    unfiltered_text = soup.get_text()
-    parse["words"] = re.sub("[^\\w]", " ", unfiltered_text).split()
-    return parse
-
-def main():
-    print("Hello from spider!")
-
+from tasks import parse_page, app
 
 if __name__ == "__main__":
-    main()
+    # Seed urls for the scraper to work with
+    urls = ["https://wikipedia.com", "https://npr.org", "https://www.allaboutbirds.org/news/"]
+    app.control.rate_limit('tasks.parse_page', '60/m')
+    for url in urls:
+        parse_page.delay(url)    
+
