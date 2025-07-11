@@ -9,7 +9,7 @@ import json
 app = Celery('scraper', broker='redis://localhost:6379/0')
 r = redis.Redis(host='localhost', port=6379, decode_responses=True, db=1)
 
-@app.task(rate_limit='10/m')
+@app.task(rate_limit='60/m')
 def parse_page(url):
     logger = logging.getLogger(__name__)
     logging.info(url)
@@ -24,8 +24,11 @@ def parse_page(url):
     parse = {"links": [],
              "title": "",
              "words": []}
-    for link in soup.find_all('a'):
-        parse["links"].append(link.get('href'))
+    for a in soup.find_all('a'):
+        link = a.get('href')
+        if link:
+            link = re.sub("^//", "https://", link)
+        parse["links"].append(link)
     for link in parse["links"]:
         if r.get(str(link)) == None:
             parse_page.delay(link)
