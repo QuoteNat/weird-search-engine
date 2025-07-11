@@ -5,5 +5,13 @@ services:
     container_name: redis-container
     ports:
       - "6379:6379"
+  postgres:
+    image: "postgres:latest"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: development
+      POSTGRES_DB: index
 # volumes:
 #   redis_data:
