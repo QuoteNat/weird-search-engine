@@ -12,6 +12,6 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: development
-      POSTGRES_DB: index
+      POSTGRES_DB: postgres
 # volumes:
 #   redis_data:

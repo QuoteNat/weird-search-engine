@@ -5,12 +5,22 @@ import logging
 import urllib.request
 import redis
 import json
+import psycopg2
 
 app = Celery('scraper', broker='redis://localhost:6379/0')
 r = redis.Redis(host='localhost', port=6379, decode_responses=True, db=1)
 
+
+
 @app.task(rate_limit='60/m')
 def parse_page(url):
+    conn = psycopg2.connect(database="postgres",
+                        host="localhost",
+                        user="postgres",
+                        password="development",
+                        port="5432")
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS pages (url text PRIMARY KEY, links text[], words text[])");
     logger = logging.getLogger(__name__)
     logging.info(url)
     html = None
@@ -36,4 +46,9 @@ def parse_page(url):
     parse["title"] = soup.title.string
     unfiltered_text = soup.get_text()
     parse["words"] = re.sub("[^\\w]", " ", unfiltered_text).split()
-    r.set(str(url), json.dumps(parse))
+    # Don't drop table students due to unlikely but theoretically possible sql injection
+    SQL = "INSERT INTO pages VALUES (%s, %s, %s);"
+    data = (url, parse["links"], parse["words"], )
+    cursor.execute(SQL, data)
+    conn.commit();
+    cursor.close();
