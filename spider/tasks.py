@@ -6,6 +6,7 @@ import urllib.request
 import redis
 import json
 import psycopg2
+import validators
 
 app = Celery('scraper', broker='redis://localhost:6379/0')
 r = redis.Redis(host='localhost', port=6379, decode_responses=True, db=1)
@@ -37,8 +38,12 @@ def parse_page(url):
     for a in soup.find_all('a'):
         link = a.get('href')
         if link:
+            # Wikipedia hrefs require wikipedia specific behaviors for reasons
+            if "wikipedia" in url:
+                link = re.sub("^/wiki", "https://wikipedia.com/wiki", link)
             link = re.sub("^//", "https://", link)
-            parse["links"].append(link)
+            if validators.url(link):
+                parse["links"].append(link)
     for link in parse["links"]:
         if r.get(str(link)) == None:
             parse_page.delay(link)
