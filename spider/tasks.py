@@ -48,8 +48,12 @@ def parse_page(url):
     for link in parse["links"]:
         if r.get(str(link)) == None:
             parse_page.delay(link)
-    parse["title"] = soup.title.string
-    parse["title-tokens"] = soup.title.string.split()
+    if soup.title:
+        parse["title"] = soup.title.string
+        parse["title-tokens"] = soup.title.string.split()
+    else:
+        parse["title"] = ""
+        parse["title-tokens"] = []
     for header in soup.find_all(re.compile("^h[1-6]$")):
         if header.string:
             parse["header-tokens"] += header.string.split()
@@ -63,6 +67,7 @@ def parse_page(url):
     cursor.execute(SQL, data)
     conn.commit();
     cursor.close();
+    r.set(url, 1)
 
 if __name__ == "__main__":
     parse_page("https://en.wikipedia.org/wiki/Black-capped_chickadee")
