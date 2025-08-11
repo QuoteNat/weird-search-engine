@@ -20,7 +20,6 @@ def parse_page(url):
                         password="development",
                         port="5432")
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS pages (url text PRIMARY KEY, links text[], words text[])");
     logger = logging.getLogger(__name__)
     logging.info(url)
     html = None
@@ -32,23 +31,30 @@ def parse_page(url):
         return
     soup = BeautifulSoup(html, 'html.parser')
     parse = {"links": [],
-             "title": "",
-             "words": []}
+             "words": [],
+             "title": [],
+             "headers": [],}
     for a in soup.find_all('a'):
         link = a.get('href')
         if link:
             link = re.sub("^//", "https://", link)
-        parse["links"].append(link)
+            parse["links"].append(link)
     for link in parse["links"]:
         if r.get(str(link)) == None:
             parse_page.delay(link)
+    parse["title"] = soup.title.string.split()
+    for header in soup.find_all(re.compile("^h[1-6]$")):
+        if header.string:
+            parse["headers"] += header.string.split()
         
-    parse["title"] = soup.title.string
     unfiltered_text = soup.get_text()
     parse["words"] = re.sub("[^\\w]", " ", unfiltered_text).split()
     # Don't drop table students due to unlikely but theoretically possible sql injection
-    SQL = "INSERT INTO pages VALUES (%s, %s, %s);"
-    data = (url, parse["links"], parse["words"], )
+    SQL = "INSERT INTO pages (url, links, words, title, headers) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (url) DO UPDATE SET links = %s, words = %s, title = %s, headers = %s;"
+    data = (url, parse["links"], parse["words"], parse["title"], parse["headers"], parse["links"], parse["words"], parse["title"], parse["headers"],)
     cursor.execute(SQL, data)
     conn.commit();
     cursor.close();
+
+if __name__ == "__main__":
+    parse_page("https://en.wikipedia.org/wiki/Black-capped_chickadee")
