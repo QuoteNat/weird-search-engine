@@ -32,9 +32,10 @@ def parse_page(url):
         return
     soup = BeautifulSoup(html, 'html.parser')
     parse = {"links": [],
-             "words": [],
-             "title": [],
-             "headers": [],}
+             "content": "",
+             "word-tokens": [],
+             "title": "",
+             "header-tokens": [],}
     for a in soup.find_all('a'):
         link = a.get('href')
         if link:
@@ -47,16 +48,18 @@ def parse_page(url):
     for link in parse["links"]:
         if r.get(str(link)) == None:
             parse_page.delay(link)
-    parse["title"] = soup.title.string.split()
+    parse["title"] = soup.title.string
+    parse["title-tokens"] = soup.title.string.split()
     for header in soup.find_all(re.compile("^h[1-6]$")):
         if header.string:
-            parse["headers"] += header.string.split()
+            parse["header-tokens"] += header.string.split()
         
     unfiltered_text = soup.get_text()
+    parse["content"] = unfiltered_text
     parse["words"] = re.sub("[^\\w]", " ", unfiltered_text).split()
     # Don't drop table students due to unlikely but theoretically possible sql injection
-    SQL = "INSERT INTO pages (url, links, words, title, headers) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (url) DO UPDATE SET links = %s, words = %s, title = %s, headers = %s;"
-    data = (url, parse["links"], parse["words"], parse["title"], parse["headers"], parse["links"], parse["words"], parse["title"], parse["headers"],)
+    SQL = "INSERT INTO pages (url, links, content, word_tokens, title, title_tokens, header_tokens) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO UPDATE SET links = %s, content = %s, word_tokens = %s, title = %s, title_tokens= %s,  header_tokens = %s;"
+    data = (url, parse["links"], parse["content"], parse["word-tokens"], parse["title"], parse["title-tokens"], parse["header-tokens"], parse["links"], parse["content"], parse["word-tokens"], parse["title"], parse["title-tokens"], parse["header-tokens"])
     cursor.execute(SQL, data)
     conn.commit();
     cursor.close();

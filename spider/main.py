@@ -8,7 +8,7 @@ if __name__ == "__main__":
                         password="development",
                         port="5432")
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS pages (url text PRIMARY KEY, links text[], words text[], title text[], headers text[])");
+    cursor.execute("CREATE TABLE IF NOT EXISTS pages (url text PRIMARY KEY, links text[], content text, word_tokens text[], title text, title_tokens text[], header_tokens text[])");
     conn.commit();
     cursor.close();
     # Ensure that pages table exists
